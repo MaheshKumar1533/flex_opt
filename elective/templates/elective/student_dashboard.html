@@ -96,7 +96,6 @@
 								<th>Quiz</th>
 								<th>Selected Subject</th>
 								<th>Subject Code</th>
-								<th>Submitted At</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -108,9 +107,6 @@
 									<span class="badge bg-primary"
 										>{{ response.selected_subject.code }}</span
 									>
-								</td>
-								<td>
-									{{ response.submitted_at|date:"M d, Y H:i" }}
 								</td>
 							</tr>
 							{% endfor %}
