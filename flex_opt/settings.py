@@ -32,15 +32,11 @@ ALLOWED_HOSTS = ["*"]
 
 # Site Configuration - Customize these for different use cases
 SITE_CONFIG = {
-    'SITE_NAME': 'Training Program Selection',
-    'SITE_DESCRIPTION': 'Choose your professional development training program. Limited seats available!',
-    'SITE_LOGO_TEXT': 'Training Hub',
-    'DEFAULT_QUIZ_TYPE': 'Training Selection',
-    'DEFAULT_SUBJECT_TYPE': 'Training Program',
-    # These can be overridden for specific deployments:
-    # For electives: {'SITE_NAME': 'Open Elective Selection', 'DEFAULT_SUBJECT_TYPE': 'Elective Subject'}
-    # For training: {'SITE_NAME': 'Training Program Selection', 'DEFAULT_SUBJECT_TYPE': 'Training Program'}
-    # For courses: {'SITE_NAME': 'Course Selection System', 'DEFAULT_SUBJECT_TYPE': 'Course'}
+    'SITE_NAME': 'Course Enrollment System',
+    'SITE_DESCRIPTION': 'Register for advanced courses. Early bird selection available.',
+    'SITE_LOGO_TEXT': 'CourseSelect',
+    'DEFAULT_QUIZ_TYPE': 'Course Registration',
+    'DEFAULT_SUBJECT_TYPE': 'Course',
 }
 
 INSTALLED_APPS = [
