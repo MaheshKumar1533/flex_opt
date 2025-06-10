@@ -1,0 +1,289 @@
+{% extends 'elective/base.html' %} {% block title %}Quiz Results - {{ quiz.title }}{% endblock %} {% block content %}
+<div class="row">
+	<div class="col-12">
+		<nav aria-label="breadcrumb">
+			<ol class="breadcrumb">
+				<li class="breadcrumb-item">
+					<a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+				</li>
+				<li class="breadcrumb-item active">
+					Results for {{ quiz.title }}
+				</li>
+			</ol>
+		</nav>
+	</div>
+</div>
+
+<div class="row mb-4">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">
+					<i class="fas fa-chart-bar me-2"></i>Quiz Results: "{{ quiz.title }}"
+				</h5>
+			</div>
+			<div class="card-body">
+				<div class="row">
+					<div class="col-md-3">
+						<div class="text-center">
+							<h4 class="text-primary">{{ total_responses }}</h4>
+							<small class="text-muted">Total Responses</small>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="text-center">
+							<h4 class="text-info">{{ total_assigned }}</h4>
+							<small class="text-muted">Assigned Students</small>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="text-center">
+							<h4 class="text-success">
+								{% widthratio total_responses total_assigned 100 %}%
+							</h4>
+							<small class="text-muted">Response Rate</small>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="text-center">
+							<h4 class="text-warning">
+								{{ quiz.subjects.count }}
+							</h4>
+							<small class="text-muted">Available Subjects</small>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Subject-wise Statistics -->
+<div class="row mb-4">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<h6 class="mb-0">
+					<i class="fas fa-chart-pie me-2"></i>Subject-wise
+					Distribution
+				</h6>
+			</div>
+			<div class="card-body">
+				<div class="row">
+					{% for subject, stats in subject_stats.items %}
+					<div class="col-lg-4 col-md-6 mb-3">
+						<div class="card border-left-primary">
+							<div class="card-body">
+								<div
+									class="d-flex justify-content-between align-items-start mb-2"
+								>
+									<h6 class="card-title mb-0">
+										{{ subject.name }}
+									</h6>
+									<span class="badge bg-primary"
+										>{{ subject.code }}</span
+									>
+								</div>
+
+								<div class="mb-2">
+									<div
+										class="d-flex justify-content-between mb-1"
+									>
+										<small class="text-muted"
+											>Selections:</small
+										>
+										<small
+											><strong
+												>{{ stats.count }} / {{ subject.max_limit }}</strong
+											></small
+										>
+									</div>
+									<div class="progress">
+										<div
+											class="progress-bar {% if stats.count >= subject.max_limit %}bg-success{% else %}bg-primary{% endif %}"
+											role="progressbar"
+											style="width: {% widthratio stats.count subject.max_limit 100 %}%"
+										></div>
+									</div>
+								</div>
+
+								<div
+									class="d-flex justify-content-between align-items-center"
+								>
+									<small class="text-muted">
+										{% if stats.count >= subject.max_limit %}
+										<span class="text-success">
+											<i
+												class="fas fa-check-circle me-1"
+											></i
+											>Full
+										</span>
+										{% else %}
+										<span class="text-primary">
+											{{ subject.max_limit|add:"-"|add:stats.count }} spots left
+										</span>
+										{% endif %}
+									</small>
+									<button
+										class="btn btn-sm btn-outline-info"
+										type="button"
+										data-bs-toggle="collapse"
+										data-bs-target="#students-{{ subject.id }}"
+									>
+										<i class="fas fa-eye"></i>
+									</button>
+								</div>
+
+								<div
+									class="collapse mt-2"
+									id="students-{{ subject.id }}"
+								>
+									<div class="border-top pt-2">
+										<small class="text-muted"
+											>Selected by:</small
+										>
+										{% if stats.students %}
+										<ul class="list-unstyled mt-1 mb-0">
+											{% for name, rollno in
+											stats.students %}
+											<li>
+												<small
+													>{{ name }} ({{ rollno }})</small
+												>
+											</li>
+											{% endfor %}
+										</ul>
+										{% else %}
+										<p class="small text-muted mb-0">
+											No selections yet
+										</p>
+										{% endif %}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Detailed Responses -->
+<div class="row">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<div class="d-flex justify-content-between align-items-center">
+					<h6 class="mb-0">
+						<i class="fas fa-list me-2"></i>All Responses
+					</h6>
+					<button
+						class="btn btn-sm btn-success"
+						onclick="exportToCSV()"
+					>
+						<i class="fas fa-download me-1"></i>Export CSV
+					</button>
+				</div>
+			</div>
+			<div class="card-body">
+				{% if responses %}
+				<div class="table-responsive">
+					<table class="table table-striped" id="responses-table">
+						<thead>
+							<tr>
+								<th>Student Name</th>
+								<th>Roll Number</th>
+								<th>Department</th>
+								<th>Year</th>
+								<th>Section</th>
+								<th>Selected Subject</th>
+								<th>Subject Code</th>
+								<th>Submitted At</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for response in responses %}
+							<tr>
+								<td>{{ response.student.name }}</td>
+								<td>{{ response.student.rollno }}</td>
+								<td>{{ response.student.dept }}</td>
+								<td>{{ response.student.year }}</td>
+								<td>{{ response.student.section }}</td>
+								<td>{{ response.selected_subject.name }}</td>
+								<td>
+									<span class="badge bg-primary"
+										>{{ response.selected_subject.code }}</span
+									>
+								</td>
+								<td>
+									{{ response.submitted_at|date:"M d, Y H:i" }}
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<div class="text-center py-4">
+					<i
+						class="fas fa-inbox text-muted"
+						style="font-size: 3rem"
+					></i>
+					<p class="mt-3 text-muted">No responses submitted yet.</p>
+				</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row mt-3">
+	<div class="col-12">
+		<a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">
+			<i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+		</a>
+	</div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+	function exportToCSV() {
+		const table = document.getElementById("responses-table");
+		let csv = [];
+
+		// Get headers
+		const headers = [];
+		table.querySelectorAll("thead th").forEach((th) => {
+			headers.push(th.textContent.trim());
+		});
+		csv.push(headers.join(","));
+
+		// Get data rows
+		table.querySelectorAll("tbody tr").forEach((tr) => {
+			const row = [];
+			tr.querySelectorAll("td").forEach((td) => {
+				let text = td.textContent.trim();
+				// Escape quotes and wrap in quotes if contains comma
+				if (text.includes(",") || text.includes('"')) {
+					text = '"' + text.replace(/"/g, '""') + '"';
+				}
+				row.push(text);
+			});
+			csv.push(row.join(","));
+		});
+
+		// Create and download file
+		const csvContent = csv.join("\n");
+		const blob = new Blob([csvContent], { type: "text/csv" });
+		const url = window.URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = "quiz_results_{{ quiz.title|slugify }}.csv";
+		document.body.appendChild(a);
+		a.click();
+		window.URL.revokeObjectURL(url);
+		document.body.removeChild(a);
+	}
+</script>
+{% endblock %}

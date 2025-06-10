@@ -1,0 +1,439 @@
+{% extends 'elective/base.html' %} {% block title %}Admin Dashboard - {{ site_config.SITE_NAME }}{% endblock %} {% block content %}
+<div class="row">
+	<div class="col-12">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h2><i class="fas fa-cogs me-2"></i>Admin Dashboard</h2>
+			<div>
+				<a
+					href="{% url 'subject_overview' %}"
+					class="btn btn-info me-2"
+				>
+					<i class="fas fa-chart-bar me-1"></i>{{ site_config.DEFAULT_SUBJECT_TYPE|default:"Subject" }}
+					Overview
+				</a>
+				<a href="{% url 'add_students' %}" class="btn btn-success me-2">
+					<i class="fas fa-user-plus me-1"></i>Add Students
+				</a>
+				<a href="{% url 'create_quiz' %}" class="btn btn-primary">
+					<i class="fas fa-plus me-1"></i>Create New Quiz
+				</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+	<div class="col-md-3">
+		<div class="card bg-primary text-white">
+			<div class="card-body">
+				<div class="d-flex justify-content-between">
+					<div>
+						<h4>{{ quizzes.count }}</h4>
+						<p class="mb-0">Total Quizzes</p>
+					</div>
+					<div class="align-self-center">
+						<i class="fas fa-clipboard-list fa-2x"></i>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-success text-white">
+			<div class="card-body">
+				<div class="d-flex justify-content-between">
+					<div>
+						<h4>{{ students.count }}</h4>
+						<p class="mb-0">Total Students</p>
+					</div>
+					<div class="align-self-center">
+						<i class="fas fa-user-graduate fa-2x"></i>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-info text-white">
+			<div class="card-body">
+				<div class="d-flex justify-content-between">
+					<div>
+						<h4>{{ subjects.count }}</h4>
+						<p class="mb-0">Total Subjects</p>
+					</div>
+					<div class="align-self-center">
+						<i class="fas fa-book fa-2x"></i>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-warning text-white">
+			<div class="card-body">
+				<div class="d-flex justify-content-between">
+					<div>
+						<h4>{{ quizzes|length }}</h4>
+						<p class="mb-0">Active Quizzes</p>
+					</div>
+					<div class="align-self-center">
+						<i class="fas fa-play fa-2x"></i>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Quizzes Management -->
+<div class="row">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">
+					<i class="fas fa-clipboard-list me-2"></i>Quiz Management
+				</h5>
+			</div>
+			<div class="card-body">
+				{% if quizzes %}
+				<div class="table-responsive">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Title</th>
+								<th>Created</th>
+								<th>Subjects</th>
+								<th>Assigned Students</th>
+								<th>Responses</th>
+								<th>Status</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for quiz in quizzes %}
+							<tr>
+								<td>
+									<strong>{{ quiz.title }}</strong>
+									{% if quiz.description %}
+									<br /><small class="text-muted"
+										>{{ quiz.description | truncatewords:10 }}</small
+									>
+									{% endif %}
+								</td>
+								<td>{{ quiz.created_at|date:"M d, Y H:i" }}</td>
+								<td>{{ quiz.subjects.count }}</td>
+								<td>{{ quiz.assigned_students.count }}</td>
+								<td>{{ quiz.responses.count }}</td>
+								<td>
+									{% if quiz.is_active %}
+									<span class="badge bg-success">Active</span>
+									{% else %}
+									<span class="badge bg-secondary"
+										>Inactive</span
+									>
+									{% endif %}
+								</td>
+								<td>
+									<div
+										class="btn-group btn-group-sm"
+										role="group"
+									>
+										<a
+											href="{% url 'assign_students' quiz.id %}"
+											class="btn btn-outline-primary"
+										>
+											<i class="fas fa-users"></i>
+										</a>
+										<a
+											href="{% url 'quiz_results' quiz.id %}"
+											class="btn btn-outline-info"
+										>
+											<i class="fas fa-chart-bar"></i>
+										</a>
+										<a
+											href="/admin/elective/quiz/{{ quiz.id }}/change/"
+											class="btn btn-outline-secondary"
+										>
+											<i class="fas fa-edit"></i>
+										</a>
+									</div>
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% else %}
+				<div class="text-center py-4">
+					<i
+						class="fas fa-clipboard text-muted"
+						style="font-size: 3rem"
+					></i>
+					<p class="mt-3 text-muted">No quizzes created yet.</p>
+					<a href="{% url 'create_quiz' %}" class="btn btn-primary">
+						<i class="fas fa-plus me-1"></i>Create Your First Quiz
+					</a>
+				</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Quiz-wise Subject Overview -->
+<div class="row mt-4">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<div class="d-flex justify-content-between align-items-center">
+					<h5 class="mb-0">
+						<i class="fas fa-chart-bar me-2"></i>Quiz-wise {{
+						site_config.DEFAULT_SUBJECT_TYPE|default:"Subject" }}
+						Overview
+					</h5>
+					<a
+						href="{% url 'subject_overview' %}"
+						class="btn btn-outline-info btn-sm"
+					>
+						<i class="fas fa-external-link-alt me-1"></i>Detailed
+						View
+					</a>
+				</div>
+			</div>
+			<div class="card-body">
+				{% if quiz_subject_overview %}{% for quiz_data in quiz_subject_overview %}
+				<div
+					class="card mb-4 {% if quiz_data.quiz.is_active %}border-success{% else %}border-secondary{% endif %}"
+				>
+					<div
+						class="card-header {% if quiz_data.quiz.is_active %}bg-light-success{% else %}bg-light{% endif %}"
+					>
+						<div
+							class="d-flex justify-content-between align-items-center"
+						>
+							<div>
+								<h6 class="mb-1">
+									<i class="fas fa-clipboard-list me-2"></i>{{ quiz_data.quiz.title }} {% if quiz_data.quiz.is_active %}
+									<span class="badge bg-success ms-2"
+										>Active</span
+									>
+									{% else %}
+									<span class="badge bg-secondary ms-2"
+										>Inactive</span
+									>
+									{% endif %}
+								</h6>
+								<small class="text-muted">
+									{{ quiz_data.quiz.assigned_students.count }}
+									students assigned • {{
+									quiz_data.total_filled }}/{{
+									quiz_data.total_capacity }} slots filled •
+									{{ quiz_data.overall_utilization }}%
+									utilization
+								</small>
+							</div>
+							<div class="text-end">
+								<div class="btn-group btn-group-sm">
+									<a
+										href="{% url 'quiz_results' quiz_data.quiz.id %}"
+										class="btn btn-outline-info"
+										title="View Results"
+									>
+										<i class="fas fa-chart-bar"></i>
+									</a>
+									<a
+										href="{% url 'assign_students' quiz_data.quiz.id %}"
+										class="btn btn-outline-primary"
+										title="Assign Students"
+									>
+										<i class="fas fa-users"></i>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="card-body">
+						{% if quiz_data.subjects %}
+						<div class="row">
+							{% for subject_data in quiz_data.subjects %}
+							<div class="col-lg-6 col-xl-4 mb-3">
+								<div
+									class="card h-100 {% if subject_data.is_full %}border-danger{% elif subject_data.current_selections > 0 %}border-warning{% else %}border-info{% endif %}"
+								>
+									<div class="card-body">
+										<div
+											class="d-flex justify-content-between align-items-start mb-2"
+										>
+											<h6 class="card-title mb-0">
+												{{ subject_data.subject.name }}
+											</h6>
+											<span class="badge bg-primary"
+												>{{ subject_data.subject.code }}</span
+											>
+										</div>
+
+										{% if subject_data.subject.description %}
+										<p
+											class="card-text text-muted small mb-2"
+										>
+											{{ subject_data.subject.description|truncatewords:10 }}
+										</p>
+										{% endif %}
+
+										<!-- Progress bar -->
+										<div class="mb-2">
+											<div
+												class="d-flex justify-content-between align-items-center mb-1"
+											>
+												<small class="text-muted"
+													>Capacity:</small
+												>
+												<small
+													><strong
+														>{{ subject_data.current_selections }} / {{ subject_data.subject.max_limit }}</strong
+													></small
+												>
+											</div>
+											<div class="progress">
+												<div
+													class="progress-bar {% if subject_data.is_full %}bg-danger{% elif subject_data.utilization_percent > 75 %}bg-warning{% else %}bg-info{% endif %}"
+													role="progressbar"
+													style="width: {{ subject_data.utilization_percent }}%"
+												></div>
+											</div>
+										</div>
+
+										<!-- Status indicators -->
+										<div
+											class="d-flex justify-content-between align-items-center"
+										>
+											<div>
+												{% if subject_data.is_full %}
+												<span class="badge bg-danger">
+													<i
+														class="fas fa-times-circle me-1"
+													></i
+													>Full
+												</span>
+												{% elif subject_data.availability <= 5 %}
+												<span class="badge bg-warning">
+													<i
+														class="fas fa-exclamation-triangle me-1"
+													></i
+													>{{ subject_data.availability }}
+													left
+												</span>
+												{% else %}
+												<span class="badge bg-success">
+													<i
+														class="fas fa-check-circle me-1"
+													></i
+													>{{ subject_data.availability }}
+													available
+												</span>
+												{% endif %}
+											</div>
+											<small class="text-muted"
+												>{{ subject_data.utilization_percent }}% filled</small
+											>
+										</div>
+									</div>
+								</div>
+							</div>
+							{% endfor %}
+						</div>
+						{% else %}
+						<div class="text-center py-3">
+							<i
+								class="fas fa-book text-muted"
+								style="font-size: 2rem"
+							></i>
+							<p class="text-muted mt-2 mb-0">
+								No {{ site_config.DEFAULT_SUBJECT_TYPE|lower|default:"subjects" }} assigned to this quiz.
+							</p>
+						</div>
+						{% endif %}
+					</div>
+				</div>
+				{% endfor %} {% else %}
+				<div class="text-center py-4">
+					<i
+						class="fas fa-chart-bar text-muted"
+						style="font-size: 3rem"
+					></i>
+					<p class="mt-3 text-muted">No quiz data available.</p>
+				</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Subjects Overview -->
+<div class="row mt-4">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<div class="d-flex justify-content-between align-items-center">
+					<h5 class="mb-0">
+						<i class="fas fa-book me-2"></i>Subjects Overview
+					</h5>
+					<a
+						href="/admin/elective/subject/add/"
+						class="btn btn-success btn-sm"
+					>
+						<i class="fas fa-plus me-1"></i>Add Subject
+					</a>
+				</div>
+			</div>
+			<div class="card-body">
+				{% if subjects %}
+				<div class="row">
+					{% for subject in subjects %}
+					<div class="col-md-4 mb-3">
+						<div class="card border-left-primary">
+							<div class="card-body">
+								<h6 class="card-title">{{ subject.name }}</h6>
+								<p class="card-text">
+									<span class="badge bg-primary"
+										>{{ subject.code }}</span
+									>
+								</p>
+								<div class="progress mb-2">
+									<div
+										class="progress-bar"
+										role="progressbar"
+										style="width: {% widthratio subject.current_count subject.max_limit 100 %}%"
+									></div>
+								</div>
+								<small class="text-muted">
+									{{ subject.current_count }} /
+									{{subject.max_limit }} students
+								</small>
+							</div>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+				{% else %}
+				<div class="text-center py-4">
+					<i
+						class="fas fa-book text-muted"
+						style="font-size: 3rem"
+					></i>
+					<p class="mt-3 text-muted">No subjects created yet.</p>
+					<a
+						href="/admin/elective/subject/add/"
+						class="btn btn-success"
+					>
+						<i class="fas fa-plus me-1"></i>Create Your First
+						Subject
+					</a>
+				</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

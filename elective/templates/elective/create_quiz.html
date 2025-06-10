@@ -1,0 +1,190 @@
+{% extends 'elective/base.html' %} {% block title %}Create Quiz - Admin
+Dashboard{% endblock %} {% block content %}
+<div class="row">
+	<div class="col-12">
+		<nav aria-label="breadcrumb">
+			<ol class="breadcrumb">
+				<li class="breadcrumb-item">
+					<a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+				</li>
+				<li class="breadcrumb-item active">Create Quiz</li>
+			</ol>
+		</nav>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-lg-8">
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">
+					<i class="fas fa-plus me-2"></i>Create New Quiz
+				</h5>
+			</div>
+			<div class="card-body">
+				<form method="post">
+					{% csrf_token %}
+					<div class="mb-3">
+						<label for="title" class="form-label"
+							>Quiz Title *</label
+						>
+						<input
+							type="text"
+							class="form-control"
+							id="title"
+							name="title"
+							required
+						/>
+						<div class="form-text">
+							Enter a descriptive title for the quiz
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<label for="description" class="form-label"
+							>Description</label
+						>
+						<textarea
+							class="form-control"
+							id="description"
+							name="description"
+							rows="3"
+						></textarea>
+						<div class="form-text">
+							Optional description to provide more details about
+							the quiz
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							<div class="mb-3">
+								<label for="start_time" class="form-label"
+									>Start Time</label
+								>
+								<input
+									type="datetime-local"
+									class="form-control"
+									id="start_time"
+									name="start_time"
+								/>
+								<div class="form-text">
+									Leave empty to start immediately
+								</div>
+							</div>
+						</div>
+						<div class="col-md-6">
+							<div class="mb-3">
+								<label for="end_time" class="form-label"
+									>End Time</label
+								>
+								<input
+									type="datetime-local"
+									class="form-control"
+									id="end_time"
+									name="end_time"
+								/>
+								<div class="form-text">
+									Leave empty for no end time
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Select Subjects *</label>
+						<div class="row">
+							{% for subject in subjects %}
+							<div class="col-md-6 mb-2">
+								<div class="form-check">
+									<input
+										class="form-check-input"
+										type="checkbox"
+										value="{{ subject.id }}"
+										id="subject_{{ subject.id }}"
+										name="subjects"
+									/>
+									<label
+										class="form-check-label"
+										for="subject_{{ subject.id }}"
+									>
+										<strong>{{ subject.code }}</strong> - {{ subject.name }} <br /><small
+											class="text-muted"
+											>Max: {{ subject.max_limit }}
+											students</small
+										>
+									</label>
+								</div>
+							</div>
+							{% endfor %}
+						</div>
+						{% if not subjects %}
+						<div class="alert alert-warning">
+							<i class="fas fa-exclamation-triangle me-2"></i>
+							No subjects available.
+							<a href="/admin/elective/subject/add/"
+								>Create subjects</a
+							>
+							first.
+						</div>
+						{% endif %}
+					</div>
+
+					<div class="d-flex justify-content-between">
+						<a
+							href="{% url 'admin_dashboard' %}"
+							class="btn btn-secondary"
+						>
+							<i class="fas fa-arrow-left me-1"></i>Back to
+							Dashboard
+						</a>
+						<button type="submit" class="btn btn-primary">
+							<i class="fas fa-save me-1"></i>Create Quiz
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-lg-4">
+		<div class="card">
+			<div class="card-header">
+				<h6 class="mb-0">
+					<i class="fas fa-info-circle me-2"></i>Quiz Creation
+					Guidelines
+				</h6>
+			</div>
+			<div class="card-body">
+				<ul class="list-unstyled">
+					<li class="mb-2">
+						<i class="fas fa-check text-success me-2"></i>
+						Choose a clear, descriptive title
+					</li>
+					<li class="mb-2">
+						<i class="fas fa-check text-success me-2"></i>
+						Select relevant subjects for the quiz
+					</li>
+					<li class="mb-2">
+						<i class="fas fa-check text-success me-2"></i>
+						Set appropriate start and end times
+					</li>
+					<li class="mb-2">
+						<i class="fas fa-check text-success me-2"></i>
+						Assign students after creating the quiz
+					</li>
+				</ul>
+
+				<div class="alert alert-info">
+					<small>
+						<i class="fas fa-lightbulb me-1"></i>
+						<strong>Tip:</strong> You can assign students to this
+						quiz after creation using department, year, and section
+						filters.
+					</small>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}

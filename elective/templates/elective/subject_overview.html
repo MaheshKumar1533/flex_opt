@@ -1,0 +1,341 @@
+{% extends 'elective/base.html' %} {% block title %}{{ site_config.DEFAULT_SUBJECT_TYPE|default:"Subject" }} Overview - {{ site_config.SITE_NAME }}{% endblock %} {% block content %}
+<div class="row">
+	<div class="col-12">
+		<nav aria-label="breadcrumb">
+			<ol class="breadcrumb">
+				<li class="breadcrumb-item">
+					<a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+				</li>
+				<li class="breadcrumb-item active">
+					{{ site_config.DEFAULT_SUBJECT_TYPE|default:"Subject" }}
+					Overview
+				</li>
+			</ol>
+		</nav>
+	</div>
+</div>
+
+<!-- Overall Statistics -->
+<div class="row mb-4">
+	<div class="col-12">
+		<div class="card bg-primary text-white">
+			<div class="card-header">
+				<h5 class="mb-0">
+					<i class="fas fa-chart-pie me-2"></i>Overall System
+					Statistics
+				</h5>
+			</div>
+			<div class="card-body">
+				<div class="row">
+					<div class="col-md-2">
+						<div class="text-center">
+							<h3>{{ overall_stats.total_quizzes }}</h3>
+							<small>Total Quizzes</small>
+						</div>
+					</div>
+					<div class="col-md-2">
+						<div class="text-center">
+							<h3>{{ overall_stats.active_quizzes }}</h3>
+							<small>Active Quizzes</small>
+						</div>
+					</div>
+					<div class="col-md-2">
+						<div class="text-center">
+							<h3>{{ overall_stats.total_subjects }}</h3>
+							<small
+								>Total {{ site_config.DEFAULT_SUBJECT_TYPE|default:"Subjects" }}</small
+							>
+						</div>
+					</div>
+					<div class="col-md-2">
+						<div class="text-center">
+							<h3>{{ overall_stats.total_capacity }}</h3>
+							<small>Total Capacity</small>
+						</div>
+					</div>
+					<div class="col-md-2">
+						<div class="text-center">
+							<h3>{{ overall_stats.total_filled }}</h3>
+							<small>Total Filled</small>
+						</div>
+					</div>
+					<div class="col-md-2">
+						<div class="text-center">
+							<h3>{{ overall_stats.utilization_percent }}%</h3>
+							<small>Overall Utilization</small>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Quiz-wise Detailed Overview -->
+<div class="row">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<div class="d-flex justify-content-between align-items-center">
+					<h5 class="mb-0">
+						<i class="fas fa-list-alt me-2"></i>Quiz-wise {{ site_config.DEFAULT_SUBJECT_TYPE|default:"Subject" }}
+						Details
+					</h5>
+					<a
+						href="{% url 'admin_dashboard' %}"
+						class="btn btn-secondary btn-sm"
+					>
+						<i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+					</a>
+				</div>
+			</div>
+			<div class="card-body">
+				{% if overview_data %} {% for quiz_data in overview_data %}
+				<div
+					class="card mb-4 {% if quiz_data.quiz.is_active %}border-success{% else %}border-secondary{% endif %}"
+				>
+					<!-- Quiz Header -->
+					<div
+						class="card-header {% if quiz_data.quiz.is_active %}bg-light-success{% else %}bg-light{% endif %}"
+					>
+						<div class="row align-items-center">
+							<div class="col-md-8">
+								<h6 class="mb-1">
+									<i class="fas fa-clipboard-list me-2"></i>{{ quiz_data.quiz.title }} {% if quiz_data.quiz.is_active %}
+									<span class="badge bg-success ms-2"
+										>Active</span
+									>
+									{% else %}
+									<span class="badge bg-secondary ms-2"
+										>Inactive</span
+									>
+									{% endif %}
+								</h6>
+								{% if quiz_data.quiz.description %}
+								<small class="text-muted"
+									>{{ quiz_data.quiz.description|truncatewords:15 }}</small
+								>
+								{% endif %}
+							</div>
+							<div class="col-md-4 text-end">
+								<div class="btn-group btn-group-sm">
+									<a
+										href="{% url 'quiz_results' quiz_data.quiz.id %}"
+										class="btn btn-outline-info"
+										title="View Results"
+									>
+										<i class="fas fa-chart-bar"></i> Results
+									</a>
+									<a
+										href="{% url 'assign_students' quiz_data.quiz.id %}"
+										class="btn btn-outline-primary"
+										title="Assign Students"
+									>
+										<i class="fas fa-users"></i> Assign
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Quiz Statistics -->
+					<div class="card-body">
+						<div class="row mb-3">
+							<div class="col-md-12">
+								<div class="alert alert-info">
+									<div class="row text-center">
+										<div class="col-md-2">
+											<strong>{{ quiz_data.stats.total_subjects }}</strong><br />
+											<small>{{ site_config.DEFAULT_SUBJECT_TYPE|default:"Subjects" }}</small>
+										</div>
+										<div class="col-md-2">
+											<strong>{{ quiz_data.stats.total_capacity }}</strong><br />
+											<small>Total Capacity</small>
+										</div>
+										<div class="col-md-2">
+											<strong>{{ quiz_data.stats.total_filled }}</strong><br />
+											<small>Total Filled</small>
+										</div>
+										<div class="col-md-2">
+											<strong>{{ quiz_data.stats.utilization_percent }}%</strong><br />
+											<small>Utilization</small>
+										</div>
+										<div class="col-md-2">
+											<strong>{{ quiz_data.stats.full_subjects }}</strong><br />
+											<small>Full</small>
+										</div>
+										<div class="col-md-2">
+											<strong>{{ quiz_data.stats.empty_subjects }}</strong><br />
+											<small>Empty</small>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- Subjects Grid -->
+						{% if quiz_data.subjects %}
+						<div class="row">
+							{% for subject_data in quiz_data.subjects %}
+							<div class="col-lg-6 col-xl-4 mb-3">
+								<div
+									class="card h-100 {% if subject_data.is_full %}border-danger{% elif subject_data.is_empty %}border-secondary{% elif subject_data.utilization_percent > 75 %}border-warning{% else %}border-success{% endif %}"
+								>
+									<div class="card-body">
+										<!-- Subject Header -->
+										<div
+											class="d-flex justify-content-between align-items-start mb-2"
+										>
+											<h6
+												class="card-title mb-0"
+												title="{{ subject_data.subject.name }}"
+											>
+												{{ subject_data.subject.name|truncatechars:25 }}
+											</h6>
+											<span class="badge bg-primary"
+												>{{ subject_data.subject.code }}</span
+											>
+										</div>
+
+										<!-- Description -->
+										{% if subject_data.subject.description %}
+										<p
+											class="card-text text-muted small mb-2"
+											title="{{ subject_data.subject.description }}"
+										>
+											{{ subject_data.subject.description|truncatewords:8 }}
+										</p>
+										{% endif %}
+
+										<!-- Capacity Information -->
+										<div class="mb-2">
+											<div
+												class="d-flex justify-content-between align-items-center mb-1"
+											>
+												<small class="text-muted"
+													>Capacity:</small
+												>
+												<small
+													><strong
+														>{{ subject_data.current_selections }} / {{ subject_data.subject.max_limit }}</strong
+													></small
+												>
+											</div>
+											<div
+												class="progress"
+												style="height: 8px"
+											>
+												<div
+													class="progress-bar {% if subject_data.is_full %}bg-danger{% elif subject_data.utilization_percent > 75 %}bg-warning{% elif subject_data.is_empty %}bg-secondary{% else %}bg-success{% endif %}"
+													role="progressbar"
+													style="width: {{ subject_data.utilization_percent }}%"
+													title="{{ subject_data.utilization_percent }}% filled"
+												></div>
+											</div>
+										</div>
+
+										<!-- Status and Actions -->
+										<div
+											class="d-flex justify-content-between align-items-center"
+										>
+											<div>
+												{% if subject_data.is_full %}
+												<span class="badge bg-danger">
+													<i
+														class="fas fa-times-circle me-1"
+													></i
+													>Full
+												</span>
+												{% elif subject_data.is_empty %}
+												<span
+													class="badge bg-secondary"
+												>
+													<i
+														class="fas fa-circle me-1"
+													></i
+													>Empty
+												</span>
+												{% elif subject_data.availability <= 5 %}
+												<span class="badge bg-warning">
+													<i
+														class="fas fa-exclamation-triangle me-1"
+													></i
+													>{{ subject_data.availability }} left
+												</span>
+												{% else %}
+												<span class="badge bg-success">
+													<i
+														class="fas fa-check-circle me-1"
+													></i
+													>{{ subject_data.availability }} available
+												</span>
+												{% endif %}
+											</div>
+											<small class="text-muted"
+												>{{ subject_data.utilization_percent }}%</small
+											>
+										</div>
+									</div>
+								</div>
+							</div>
+							{% endfor %}
+						</div>
+						{% else %}
+						<div class="text-center py-3">
+							<i
+								class="fas fa-book text-muted"
+								style="font-size: 2rem"
+							></i>
+							<p class="text-muted mt-2 mb-0">
+								No {{ site_config.DEFAULT_SUBJECT_TYPE|lower|default:"subjects" }} assigned to this quiz.
+							</p>
+							<a
+								href="/admin/elective/quiz/{{ quiz_data.quiz.id }}/change/"
+								class="btn btn-sm btn-outline-primary mt-2"
+							>
+								<i class="fas fa-plus me-1"></i>Add {{ site_config.DEFAULT_SUBJECT_TYPE|default:"Subjects" }}
+							</a>
+						</div>
+						{% endif %}
+					</div>
+				</div>
+				{% endfor %} {% else %}
+				<div class="text-center py-5">
+					<i
+						class="fas fa-chart-bar text-muted"
+						style="font-size: 4rem"
+					></i>
+					<h4 class="text-muted mt-3">No Quiz Data Available</h4>
+					<p class="text-muted">
+						Create some quizzes to see the subject overview.
+					</p>
+					<a href="{% url 'create_quiz' %}" class="btn btn-primary">
+						<i class="fas fa-plus me-1"></i>Create First Quiz
+					</a>
+				</div>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %} {% block extra_css %}
+<style>
+	.bg-light-success {
+		background-color: #d4edda !important;
+	}
+	.border-left-success {
+		border-left: 4px solid #28a745 !important;
+	}
+	.card-title {
+		font-size: 0.95rem;
+		font-weight: 600;
+	}
+	.progress {
+		height: 8px;
+		border-radius: 4px;
+	}
+	.badge {
+		font-size: 0.75rem;
+	}
+</style>
+{% endblock %}

@@ -1,0 +1,434 @@
+{% extends 'elective/base.html' %} {% block title %}Add Students - {{
+site_config.SITE_NAME }}{% endblock %} {% block content %}
+<div class="row">
+	<div class="col-12">
+		<nav aria-label="breadcrumb">
+			<ol class="breadcrumb">
+				<li class="breadcrumb-item">
+					<a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+				</li>
+				<li class="breadcrumb-item active">Add Students</li>
+			</ol>
+		</nav>
+	</div>
+</div>
+
+<!-- Page Header -->
+<div class="row mb-4">
+	<div class="col-12">
+		<div class="d-flex justify-content-between align-items-center">
+			<h2><i class="fas fa-user-plus me-2"></i>Add Students</h2>
+			<div>
+				<a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">
+					<i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+				</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+	<div class="col-md-3">
+		<div class="card bg-info text-white">
+			<div class="card-body text-center">
+				<h4>{{ total_students }}</h4>
+				<small>Total Students</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-success text-white">
+			<div class="card-body text-center">
+				<h4>{{ departments|length }}</h4>
+				<small>Departments</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-warning text-white">
+			<div class="card-body text-center">
+				<h4>{{ years|length }}</h4>
+				<small>Year Levels</small>
+			</div>
+		</div>
+	</div>
+	<div class="col-md-3">
+		<div class="card bg-primary text-white">
+			<div class="card-body text-center">
+				<h4>{{ sections|length }}</h4>
+				<small>Sections</small>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<!-- CSV Upload Section -->
+	<div class="col-lg-6 mb-4">
+		<div class="card h-100">
+			<div class="card-header bg-primary text-white">
+				<h5 class="mb-0">
+					<i class="fas fa-file-csv me-2"></i>Bulk Upload via CSV
+				</h5>
+			</div>
+			<div class="card-body">
+				<form method="post" enctype="multipart/form-data" id="csv-form">
+					{% csrf_token %}
+
+					<div class="mb-3">
+						<label for="csv_file" class="form-label"
+							>Select CSV File</label
+						>
+						<input
+							type="file"
+							class="form-control"
+							id="csv_file"
+							name="csv_file"
+							accept=".csv"
+							required
+						/>
+						<div class="form-text">
+							<i class="fas fa-info-circle me-1"></i>
+							Upload a CSV file with student information
+						</div>
+					</div>
+
+					<div class="alert alert-info">
+						<h6>
+							<i class="fas fa-file-alt me-2"></i>CSV Format
+							Requirements:
+						</h6>
+						<p class="mb-2">
+							Your CSV file must include these columns (in any
+							order):
+						</p>
+						<ul class="mb-2">
+							<li>
+								<strong>name</strong> - Full name of the student
+							</li>
+							<li>
+								<strong>rollno</strong> - Unique roll number
+							</li>
+							<li>
+								<strong>email</strong> - Unique email address
+							</li>
+							<li><strong>dept</strong> - Department name</li>
+							<li><strong>year</strong> - Year level (1-10)</li>
+							<li>
+								<strong>section</strong> - Section (A, B, C,
+								etc.)
+							</li>
+							<li>
+								<strong>password</strong> - Login password
+								(optional, default: password123)
+							</li>
+						</ul>
+						<small class="text-muted">
+							<i class="fas fa-download me-1"></i>
+							<a
+								href="#"
+								onclick="downloadSampleCSV()"
+								class="text-decoration-none"
+								>Download sample CSV template</a
+							>
+						</small>
+					</div>
+
+					<button type="submit" class="btn btn-primary btn-lg w-100">
+						<i class="fas fa-upload me-2"></i>Upload CSV File
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- Individual Student Addition -->
+	<div class="col-lg-6 mb-4">
+		<div class="card h-100">
+			<div class="card-header bg-success text-white">
+				<h5 class="mb-0">
+					<i class="fas fa-user-plus me-2"></i>Add Individual Student
+				</h5>
+			</div>
+			<div class="card-body">
+				<form method="post" id="individual-form">
+					{% csrf_token %}
+
+					<div class="row">
+						<div class="col-md-6 mb-3">
+							<label for="name" class="form-label"
+								>Full Name *</label
+							>
+							<input
+								type="text"
+								class="form-control"
+								id="name"
+								name="name"
+								required
+							/>
+						</div>
+						<div class="col-md-6 mb-3">
+							<label for="rollno" class="form-label"
+								>Roll Number *</label
+							>
+							<input
+								type="text"
+								class="form-control"
+								id="rollno"
+								name="rollno"
+								required
+							/>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<label for="email" class="form-label"
+							>Email Address *</label
+						>
+						<input
+							type="email"
+							class="form-control"
+							id="email"
+							name="email"
+							required
+						/>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6 mb-3">
+							<label for="dept" class="form-label"
+								>Department *</label
+							>
+							<input
+								type="text"
+								class="form-control"
+								id="dept"
+								name="dept"
+								list="dept-list"
+								required
+							/>
+							<datalist id="dept-list">
+								{% for dept in departments %}
+								<option value="{{ dept }}">{% endfor %}</option>
+							</datalist>
+						</div>
+						<div class="col-md-3 mb-3">
+							<label for="year" class="form-label">Year *</label>
+							<select
+								class="form-control"
+								id="year"
+								name="year"
+								required
+							>
+								<option value="">Select Year</option>
+								{% for year in "12345678910"|make_list %}
+								<option value="{{ year }}">{{ year }}</option>
+								{% endfor %}
+							</select>
+						</div>
+						<div class="col-md-3 mb-3">
+							<label for="section" class="form-label"
+								>Section *</label
+							>
+							<input
+								type="text"
+								class="form-control"
+								id="section"
+								name="section"
+								list="section-list"
+								required
+								maxlength="3"
+							/>
+							<datalist id="section-list">
+								{% for section in sections %}
+								<option value="{{ section }}">
+									{% endfor %}
+								</option>
+
+								<option value="A"></option>
+								<option value="B"></option>
+								<option value="C"></option>
+								<option value="D"></option>
+							</datalist>
+						</div>
+					</div>
+
+					<div class="mb-3">
+						<label for="password" class="form-label"
+							>Password</label
+						>
+						<input
+							type="password"
+							class="form-control"
+							id="password"
+							name="password"
+							placeholder="Leave blank for default (password123)"
+						/>
+						<div class="form-text">
+							Default password is 'password123' if left blank
+						</div>
+					</div>
+
+					<button type="submit" class="btn btn-success btn-lg w-100">
+						<i class="fas fa-plus me-2"></i>Add Student
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Current Students Overview -->
+{% if total_students > 0 %}
+<div class="row mt-4">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">
+					<i class="fas fa-users me-2"></i>Current Students Overview
+				</h5>
+			</div>
+			<div class="card-body">
+				<div class="row">
+					<div class="col-md-4">
+						<h6>Departments</h6>
+						<ul class="list-unstyled">
+							{% for dept in departments %}
+							<li>
+								<i class="fas fa-building me-2 text-muted"></i
+								>{{ dept }}
+							</li>
+							{% endfor %}
+						</ul>
+					</div>
+					<div class="col-md-4">
+						<h6>Years</h6>
+						<div>
+							{% for year in years %}
+							<span class="badge bg-secondary me-1 mb-1"
+								>Year {{ year }}</span
+							>
+							{% endfor %}
+						</div>
+					</div>
+					<div class="col-md-4">
+						<h6>Sections</h6>
+						<div>
+							{% for section in sections %}
+							<span class="badge bg-info me-1 mb-1"
+								>{{ section }}</span
+							>
+							{% endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %} {% endblock %} {% block extra_js %}
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		// Form validation
+		const csvForm = document.getElementById("csv-form");
+		const individualForm = document.getElementById("individual-form");
+
+		csvForm.addEventListener("submit", function (e) {
+			const fileInput = document.getElementById("csv_file");
+			if (!fileInput.files.length) {
+				e.preventDefault();
+				alert("Please select a CSV file to upload.");
+				return;
+			}
+
+			const file = fileInput.files[0];
+			if (!file.name.toLowerCase().endsWith(".csv")) {
+				e.preventDefault();
+				alert("Please select a valid CSV file.");
+				return;
+			}
+
+			// Show loading state
+			const submitBtn = csvForm.querySelector('button[type="submit"]');
+			submitBtn.innerHTML =
+				'<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+			submitBtn.disabled = true;
+		});
+
+		individualForm.addEventListener("submit", function (e) {
+			const submitBtn = individualForm.querySelector(
+				'button[type="submit"]'
+			);
+			submitBtn.innerHTML =
+				'<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+			submitBtn.disabled = true;
+		});
+
+		// Auto-uppercase section input
+		document
+			.getElementById("section")
+			.addEventListener("input", function (e) {
+				e.target.value = e.target.value.toUpperCase();
+			});
+	});
+
+	function downloadSampleCSV() {
+		const csvContent = [
+			"name,rollno,email,dept,year,section,password",
+			"John Doe,21CS001,john.doe@student.edu,Computer Science,3,A,password123",
+			"Jane Smith,21IT002,jane.smith@student.edu,Information Technology,3,B,mypassword",
+			"Mike Johnson,21EC003,mike.johnson@student.edu,Electronics,2,A,",
+			"Sarah Wilson,21ME004,sarah.wilson@student.edu,Mechanical Engineering,4,C,secure123",
+		].join("\n");
+
+		const blob = new Blob([csvContent], { type: "text/csv" });
+		const url = window.URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = "student_template.csv";
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		window.URL.revokeObjectURL(url);
+	}
+</script>
+{% endblock %} {% block extra_css %}
+<style>
+	.card {
+		transition: transform 0.2s;
+	}
+
+	.card:hover {
+		transform: translateY(-2px);
+	}
+
+	.form-control:focus {
+		border-color: #007bff;
+		box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+	}
+
+	.alert-info {
+		border-left: 4px solid #17a2b8;
+	}
+
+	.badge {
+		font-size: 0.75rem;
+	}
+
+	.list-unstyled li {
+		padding: 0.25rem 0;
+	}
+
+	#csv_file {
+		border: 2px dashed #ced4da;
+		padding: 1rem;
+		text-align: center;
+		transition: border-color 0.3s;
+	}
+
+	#csv_file:hover {
+		border-color: #007bff;
+	}
+</style>
+{% endblock %}

@@ -1,0 +1,457 @@
+{% extends 'elective/base.html' %} {% block title %}{{ quiz.title }} - {{ site_config.SITE_NAME }}{% endblock %} {% block extra_css %}
+<style>
+	.subject-card {
+		transition: all 0.3s ease;
+		cursor: pointer;
+	}
+	.subject-card:hover:not(.disabled) {
+		transform: translateY(-3px);
+		box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+	}
+	.subject-card.selected {
+		border-color: #28a745;
+		background-color: #f8fff9;
+	}
+	.subject-card.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.progress-bar {
+		transition: width 0.5s ease;
+	}
+	.live-indicator {
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		background-color: #28a745;
+		border-radius: 50%;
+		animation: pulse 2s infinite;
+	}
+	@keyframes pulse {
+		0% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.5;
+		}
+		100% {
+			opacity: 1;
+		}
+	}
+</style>
+{% endblock %} {% block content %}
+<div class="row">
+	<div class="col-12">
+		<div class="card mb-4">
+			<div class="card-header bg-primary text-white">
+				<h4 class="mb-0">
+					<i class="fas fa-clipboard-list me-2"></i>{{ quiz.title }}
+				</h4>
+			</div>
+			<div class="card-body">
+				{% if quiz.description %}
+				<p class="card-text">{{ quiz.description }}</p>
+				{% endif %}
+				<div class="row">
+					<div class="col-md-6">
+						<small class="text-muted">
+							<i class="fas fa-clock me-1"></i>Quiz Created: {{ quiz.created_at }}
+						</small>
+					</div>
+					<div class="col-md-6">
+						<small class="text-muted">
+							<span class="live-indicator"></span> Live updates
+							enabled
+						</small>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">
+					<i class="fas fa-book me-2"></i>Select Your {{ site_config.DEFAULT_SUBJECT_TYPE|default:"Subject" }}
+				</h5>
+				<small class="text-muted"
+					>Click on a subject card to select it. Real-time
+					availability is shown below.</small
+				>
+			</div>
+			<div class="card-body">
+				<div class="row" id="subjects-container">
+					{% for subject in subjects %}
+					<div class="col-md-6 mb-4">
+						<div
+							class="card subject-card {% if subject.is_full %}disabled{% endif %}"
+							data-subject-id="{{ subject.id }}"
+							data-max-limit="{{ subject.max_limit }}"
+						>
+							<div class="card-body">
+								<div
+									class="d-flex justify-content-between align-items-start mb-2"
+								>
+									<h6 class="card-title mb-0">
+										{{ subject.name }}
+									</h6>
+									<span class="badge bg-primary"
+										>{{ subject.code }}</span
+									>
+								</div>
+
+								{% if subject.description %}
+								<p class="card-text text-muted small">
+									{{ subject.description|truncatewords:20 }}
+								</p>
+								{% endif %}
+
+								<div class="mb-2">
+									<div
+										class="d-flex justify-content-between align-items-center mb-1"
+									>
+										<small class="text-muted"
+											>Availability:</small
+										>
+										<small
+											class="live-count"
+											id="count-{{ subject.id }}"
+										>
+											<span class="current-count"
+												>{{ subject.current_count
+												}}</span
+											>
+											/ {{ subject.max_limit }}
+										</small>
+									</div>
+									<div class="progress">
+										<div
+											class="progress-bar"
+											id="progress-{{ subject.id }}"
+											role="progressbar"
+											style="width: {% widthratio subject.current_count subject.max_limit 100 %}%"
+											aria-valuenow="{{ subject.current_count }}"
+											aria-valuemin="0"
+											aria-valuemax="{{ subject.max_limit }}"
+										></div>
+									</div>
+								</div>
+
+								<div
+									class="d-flex justify-content-between align-items-center"
+								>
+									<small
+										class="availability-text"
+										id="availability-{{ subject.id }}"
+									>
+										{% if subject.is_full %}
+										<span class="text-danger">
+											<i
+												class="fas fa-times-circle me-1"
+											></i
+											>Full
+										</span>
+										{% else %}
+										<span class="text-success">
+											<i
+												class="fas fa-check-circle me-1"
+											></i
+											>{{ subject.available_slots }}
+											slot{{ subject.available_slots|pluralize }}
+											available
+										</span>
+										{% endif %}
+									</small>
+									<div
+										class="selection-indicator"
+										id="selected-{{ subject.id }}"
+										style="display: none"
+									>
+										<i
+											class="fas fa-check-circle text-success"
+										></i>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					{% endfor %}
+				</div>
+
+				<div class="text-center mt-4">
+					<button
+						type="button"
+						class="btn btn-success btn-lg"
+						id="submit-btn"
+						disabled
+					>
+						<i class="fas fa-paper-plane me-2"></i>Submit Selection
+					</button>
+					<div class="mt-2">
+						<small class="text-muted"
+							>Please select a subject before submitting.</small
+						>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Confirm Your Selection</h5>
+				<button
+					type="button"
+					class="btn-close"
+					data-bs-dismiss="modal"
+				></button>
+			</div>
+			<div class="modal-body">
+				<p>Are you sure you want to select this subject?</p>
+				<div class="card">
+					<div class="card-body text-center">
+						<h6 id="selected-subject-name"></h6>
+						<span
+							class="badge bg-primary"
+							id="selected-subject-code"
+						></span>
+					</div>
+				</div>
+				<div class="alert alert-warning mt-3">
+					<i class="fas fa-exclamation-triangle me-2"></i>
+					<strong>Note:</strong> This action cannot be undone. You can
+					only select one subject per quiz.
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button
+					type="button"
+					class="btn btn-secondary"
+					data-bs-dismiss="modal"
+				>
+					Cancel
+				</button>
+				<button
+					type="button"
+					class="btn btn-success"
+					id="confirm-submit"
+				>
+					<i class="fas fa-check me-1"></i>Confirm Selection
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		let selectedSubjectId = null;
+		let socket = null;
+
+		// Initialize WebSocket connection
+		function initWebSocket() {
+			const protocol =
+				window.location.protocol === "https:" ? "wss:" : "ws:";
+			const wsUrl = `${protocol}//${window.location.host}/ws/quiz/{{ quiz.id }}/`;
+
+			socket = new WebSocket(wsUrl);
+
+			socket.onopen = function (e) {
+				console.log("WebSocket connection opened");
+			};
+
+			socket.onmessage = function (e) {
+				const data = JSON.parse(e.data);
+
+				if (data.type === "subject_counts") {
+					updateAllSubjectCounts(data.data);
+				} else if (data.type === "subject_update") {
+					updateSubjectCount(data.data);
+				}
+			};
+
+			socket.onclose = function (e) {
+				console.log("WebSocket connection closed");
+				// Attempt to reconnect after 3 seconds
+				setTimeout(initWebSocket, 3000);
+			};
+
+			socket.onerror = function (e) {
+				console.error("WebSocket error:", e);
+			};
+		}
+
+		// Update all subject counts (initial load)
+		function updateAllSubjectCounts(subjects) {
+			subjects.forEach((subject) => {
+				updateSubjectCount({
+					subject_id: subject.id,
+					current_count: subject.current_count,
+					is_full: subject.is_full,
+				});
+			});
+		}
+
+		// Update single subject count
+		function updateSubjectCount(data) {
+			const subjectCard = document.querySelector(
+				`[data-subject-id="${data.subject_id}"]`
+			);
+			const currentCountSpan = document.querySelector(
+				`#count-${data.subject_id} .current-count`
+			);
+			const progressBar = document.getElementById(
+				`progress-${data.subject_id}`
+			);
+			const availabilityText = document.getElementById(
+				`availability-${data.subject_id}`
+			);
+
+			if (currentCountSpan) {
+				currentCountSpan.textContent = data.current_count;
+			}
+
+			if (progressBar) {
+				const maxLimit = parseInt(subjectCard.dataset.maxLimit);
+				const percentage = (data.current_count / maxLimit) * 100;
+				progressBar.style.width = `${percentage}%`;
+				progressBar.setAttribute("aria-valuenow", data.current_count);
+			}
+
+			if (availabilityText) {
+				const maxLimit = parseInt(subjectCard.dataset.maxLimit);
+				const availableSlots = maxLimit - data.current_count;
+
+				if (data.is_full) {
+					availabilityText.innerHTML =
+						'<span class="text-danger"><i class="fas fa-times-circle me-1"></i>Full</span>';
+					subjectCard.classList.add("disabled");
+				} else {
+					availabilityText.innerHTML = `<span class="text-success"><i class="fas fa-check-circle me-1"></i>${availableSlots} slot${
+						availableSlots !== 1 ? "s" : ""
+					} available</span>`;
+					subjectCard.classList.remove("disabled");
+				}
+			}
+		}
+
+		// Handle subject selection
+		document.querySelectorAll(".subject-card").forEach((card) => {
+			card.addEventListener("click", function () {
+				if (this.classList.contains("disabled")) {
+					return;
+				}
+
+				// Remove previous selection
+				document.querySelectorAll(".subject-card").forEach((c) => {
+					c.classList.remove("selected");
+					c.querySelector(".selection-indicator").style.display =
+						"none";
+				});
+
+				// Add selection to clicked card
+				this.classList.add("selected");
+				this.querySelector(".selection-indicator").style.display =
+					"block";
+
+				selectedSubjectId = this.dataset.subjectId;
+				document.getElementById("submit-btn").disabled = false;
+			});
+		});
+
+		// Handle submit button click
+		document
+			.getElementById("submit-btn")
+			.addEventListener("click", function () {
+				if (!selectedSubjectId) {
+					return;
+				}
+
+				const selectedCard = document.querySelector(
+					`[data-subject-id="${selectedSubjectId}"]`
+				);
+				const subjectName =
+					selectedCard.querySelector(".card-title").textContent;
+				const subjectCode =
+					selectedCard.querySelector(".badge").textContent;
+
+				document.getElementById("selected-subject-name").textContent =
+					subjectName;
+				document.getElementById("selected-subject-code").textContent =
+					subjectCode;
+
+				new bootstrap.Modal(
+					document.getElementById("confirmationModal")
+				).show();
+			});
+
+		// Handle final confirmation
+		document
+			.getElementById("confirm-submit")
+			.addEventListener("click", function () {
+				if (!selectedSubjectId) {
+					return;
+				}
+
+				// Disable the button to prevent double submission
+				this.disabled = true;
+				this.innerHTML =
+					'<i class="fas fa-spinner fa-spin me-1"></i>Submitting...';
+
+				// Submit the selection
+				fetch(`{% url 'submit_quiz_response' quiz.id %}`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRFToken": document.querySelector(
+							"[name=csrfmiddlewaretoken]"
+						).value,
+					},
+					body: JSON.stringify({
+						subject_id: selectedSubjectId,
+					}),
+				})
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.success) {
+							// Show success message and redirect
+							alert(data.message);
+							window.location.href = data.redirect_url;
+						} else {
+							// Show error message
+							alert("Error: " + data.error);
+							this.disabled = false;
+							this.innerHTML =
+								'<i class="fas fa-check me-1"></i>Confirm Selection';
+						}
+					})
+					.catch((error) => {
+						console.error("Error:", error);
+						alert(
+							"An error occurred while submitting your selection."
+						);
+						this.disabled = false;
+						this.innerHTML =
+							'<i class="fas fa-check me-1"></i>Confirm Selection';
+					});
+			});
+
+		// Initialize WebSocket connection
+		initWebSocket();
+
+		// Close WebSocket when page is unloaded
+		window.addEventListener("beforeunload", function () {
+			if (socket) {
+				socket.close();
+			}
+		});
+	});
+</script>
+{% csrf_token %} {% endblock %}

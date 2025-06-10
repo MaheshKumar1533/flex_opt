@@ -1,0 +1,88 @@
+{% extends 'elective/base.html' %} {% block title %}Student Login - {{ site_config.SITE_NAME }}{% endblock %} {% block content %}
+<div class="row justify-content-center">
+	<div class="col-md-6">
+		<div class="card shadow">
+			<div class="card-header bg-primary text-white text-center">
+				<h4 class="mb-0">
+					<i class="fas fa-user-graduate me-2"></i>Student Login
+				</h4>
+			</div>
+			<div class="card-body">
+				<form method="post">
+					{% csrf_token %}
+					<div class="mb-3">
+						<label for="email" class="form-label">
+							<i class="fas fa-envelope me-1"></i>Email Address
+						</label>
+						<input
+							type="email"
+							class="form-control"
+							id="email"
+							name="email"
+							required
+						/>
+					</div>
+					<div class="mb-3">
+						<label for="password" class="form-label">
+							<i class="fas fa-lock me-1"></i>Password
+						</label>
+						<input
+							type="password"
+							class="form-control"
+							id="password"
+							name="password"
+							required
+						/>
+					</div>
+					<div class="d-grid">
+						<button type="submit" class="btn btn-primary">
+							<i class="fas fa-sign-in-alt me-1"></i>Login
+						</button>
+					</div>
+				</form>
+			</div>
+			<div class="card-footer text-center text-muted">
+				<small
+					>Enter your registered email and password to access the {{ site_config.SITE_DESCRIPTION|default:"Please log in to access the selection system." }}</small
+				>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row mt-5">
+	<div class="col-12">
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">
+					<i class="fas fa-info-circle me-2"></i>Instructions
+				</h5>
+			</div>
+			<div class="card-body">
+				<ol>
+					<li>
+						Use your registered email address and password to log
+						in.
+					</li>
+					<li>
+						You will see available quizzes assigned to you on your
+						dashboard.
+					</li>
+					<li>
+						Each quiz allows you to select one {{ site_config.DEFAULT_SUBJECT_TYPE|lower|default:"subject" }}.
+					</li>
+					<li>
+						Subject selection is on a first-come, first-served
+						basis.
+					</li>
+					<li>
+						Once a subject reaches its maximum capacity, it will be
+						disabled.
+					</li>
+					<li>You can only submit your choice once per quiz.</li>
+				</ol>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
