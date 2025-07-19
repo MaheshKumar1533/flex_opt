@@ -142,18 +142,28 @@
 										<a
 											href="{% url 'assign_students' quiz.id %}"
 											class="btn btn-outline-primary"
+											title="Assign Students"
 										>
 											<i class="fas fa-users"></i>
 										</a>
 										<a
 											href="{% url 'quiz_results' quiz.id %}"
 											class="btn btn-outline-info"
+											title="View Results"
 										>
 											<i class="fas fa-chart-bar"></i>
 										</a>
 										<a
+											href="{% url 'quiz_non_attendees' quiz.id %}"
+											class="btn btn-outline-danger"
+											title="Non-Attendees"
+										>
+											<i class="fas fa-user-slash"></i>
+										</a>
+										<a
 											href="/admin/elective/quiz/{{ quiz.id }}/change/"
 											class="btn btn-outline-secondary"
+											title="Edit Quiz"
 										>
 											<i class="fas fa-edit"></i>
 										</a>
@@ -238,6 +248,13 @@
 										title="View Results"
 									>
 										<i class="fas fa-chart-bar"></i>
+									</a>
+									<a
+										href="{% url 'quiz_non_attendees' quiz_data.quiz.id %}"
+										class="btn btn-outline-danger"
+										title="Non-Attendees"
+									>
+										<i class="fas fa-user-slash"></i>
 									</a>
 									<a
 										href="{% url 'assign_students' quiz_data.quiz.id %}"

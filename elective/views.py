@@ -470,6 +470,49 @@ def quiz_results(request, quiz_id):
 
 
 @staff_member_required
+def quiz_non_attendees(request, quiz_id):
+    """View students who did not attend the quiz"""
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+    
+    # Get all assigned students
+    assigned_students = quiz.assigned_students.all()
+    
+    # Get students who have submitted responses
+    responded_student_ids = quiz.responses.values_list('student_id', flat=True)
+    
+    # Get students who didn't attend (assigned but no response)
+    non_attendees = assigned_students.exclude(id__in=responded_student_ids).order_by('rollno')
+    
+    # Group non-attendees by department for better organization
+    non_attendees_by_dept = {}
+    for student in non_attendees:
+        dept = student.dept
+        if dept not in non_attendees_by_dept:
+            non_attendees_by_dept[dept] = []
+        non_attendees_by_dept[dept].append(student)
+    
+    # Calculate statistics
+    total_assigned = assigned_students.count()
+    total_responded = len(responded_student_ids)
+    total_non_attendees = non_attendees.count()
+    response_rate = round((total_responded / total_assigned * 100), 1) if total_assigned > 0 else 0
+    non_attendance_rate = round((total_non_attendees / total_assigned * 100), 1) if total_assigned > 0 else 0
+
+    context = {
+        'quiz': quiz,
+        'non_attendees': non_attendees,
+        'non_attendees_by_dept': non_attendees_by_dept,
+        'total_assigned': total_assigned,
+        'total_responded': total_responded,
+        'total_non_attendees': total_non_attendees,
+        'response_rate': response_rate,
+        'non_attendance_rate': non_attendance_rate,
+    }
+
+    return render(request, 'elective/quiz_non_attendees.html', context)
+
+
+@staff_member_required
 def subject_overview(request):
     """Detailed quiz-wise subject overview page"""
     quizzes = Quiz.objects.all().order_by('-created_at')

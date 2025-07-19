@@ -175,6 +175,13 @@ python manage.py populate_data training
     - Export results as CSV
     - See detailed student responses
 
+5. **Managing Non-Attendees**
+    - View students who didn't attend the quiz
+    - Department-wise breakdown of non-attendees
+    - Export non-attendee lists to CSV
+    - Send reminders to absent students (coming soon)
+    - Track attendance rates and statistics
+
 ### Django Admin Interface
 
 1. **Access**: http://localhost:8000/admin/
@@ -252,6 +259,7 @@ The application uses Django Channels for WebSocket communication:
 -   `POST /admin/create-quiz/` - Create quiz submission
 -   `GET /admin/quiz/<id>/assign/` - Assign students page
 -   `GET /admin/quiz/<id>/results/` - Quiz results page
+-   `GET /admin/quiz/<id>/non-attendees/` - View students who didn't attend quiz
 
 ### WebSocket
 

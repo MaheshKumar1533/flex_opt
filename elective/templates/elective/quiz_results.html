@@ -46,11 +46,23 @@
 					</div>
 					<div class="col-md-3">
 						<div class="text-center">
-							<h4 class="text-warning">
-								{{ quiz.subjects.count }}
+							<h4 class="text-danger">
+								{{ total_assigned|add:"-"|add:total_responses }}
 							</h4>
-							<small class="text-muted">Available Subjects</small>
+							<small class="text-muted">Non-Attendees</small>
 						</div>
+					</div>
+				</div>
+				
+				<!-- Quick action buttons -->
+				<div class="row mt-3">
+					<div class="col-12 text-center">
+						<a href="{% url 'quiz_non_attendees' quiz.id %}" class="btn btn-outline-danger btn-sm">
+							<i class="fas fa-user-slash me-1"></i>View Non-Attendees ({{ total_assigned|add:"-"|add:total_responses }})
+						</a>
+						<button class="btn btn-outline-info btn-sm ms-2" onclick="showAttendanceBreakdown()">
+							<i class="fas fa-chart-pie me-1"></i>Attendance Breakdown
+						</button>
 					</div>
 				</div>
 			</div>
@@ -283,6 +295,27 @@
 		a.click();
 		window.URL.revokeObjectURL(url);
 		document.body.removeChild(a);
+	}
+
+	function showAttendanceBreakdown() {
+		const totalAssigned = {{ total_assigned }};
+		const totalResponses = {{ total_responses }};
+		const nonAttendees = totalAssigned - totalResponses;
+		const responseRate = Math.round((totalResponses / totalAssigned) * 100);
+		const nonAttendanceRate = Math.round((nonAttendees / totalAssigned) * 100);
+
+		let message = `📊 Attendance Breakdown for "{{ quiz.title }}"\n\n`;
+		message += `👥 Total Assigned Students: ${totalAssigned}\n`;
+		message += `✅ Students Responded: ${totalResponses} (${responseRate}%)\n`;
+		message += `❌ Non-Attendees: ${nonAttendees} (${nonAttendanceRate}%)\n\n`;
+		
+		if (nonAttendees > 0) {
+			message += `⚠️ Consider viewing the Non-Attendees list to follow up with students who haven't participated.`;
+		} else {
+			message += `🎉 Excellent! All assigned students have participated in the quiz.`;
+		}
+
+		alert(message);
 	}
 </script>
 {% endblock %}
